@@ -3,8 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { Theme, Language } from '../types/settings';
 
 interface SettingsState {
-  // Gateway auto-detected (same origin as app)
-  apiKey: string;
+  // Connection
   connectionStatus: 'untested' | 'ok' | 'error';
   connectionError?: string;
   // Provider accounts
@@ -21,7 +20,6 @@ interface SettingsState {
   language: Language;
   sidebarCollapsed: boolean;
   // Actions
-  setApiKey: (key: string) => void;
   setConnectionStatus: (status: 'untested' | 'ok' | 'error', error?: string) => void;
   setClaudeAccount: (email: string, sessionKey: string) => void;
   setClaudeStatus: (status: 'unconfigured' | 'configured' | 'connected' | 'error', error?: string) => void;
@@ -35,7 +33,6 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      apiKey: '',
       connectionStatus: 'untested',
       connectionError: undefined,
       claudeEmail: '',
@@ -49,7 +46,6 @@ export const useSettingsStore = create<SettingsState>()(
       theme: 'light',
       language: 'fr',
       sidebarCollapsed: false,
-      setApiKey: (key) => set({ apiKey: key, connectionStatus: 'untested' }),
       setConnectionStatus: (status, error) => set({ connectionStatus: status, connectionError: error }),
       setClaudeAccount: (email, sessionKey) => set({ claudeEmail: email, claudeSessionKey: sessionKey, claudeStatus: sessionKey ? 'configured' : 'unconfigured' }),
       setClaudeStatus: (status, error) => set({ claudeStatus: status, claudeError: error }),

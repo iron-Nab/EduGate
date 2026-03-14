@@ -6,9 +6,9 @@ import { db } from '../db';
 import { generateId } from '../lib/utils';
 
 export function useGateway() {
-  const { apiKey } = useSettingsStore();
   const { setLoading, setError } = useChatStore();
-  const isConfigured = Boolean(apiKey);
+  // Always configured — front & back are on the same server
+  const isConfigured = true;
 
   const testConnection = useCallback(async () => {
     try {

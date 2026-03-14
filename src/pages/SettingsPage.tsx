@@ -15,11 +15,11 @@ import type { Language, Theme } from '../types/settings';
 export function SettingsPage() {
   const { t, i18n } = useTranslation();
   const {
-    apiKey, connectionStatus, connectionError,
+    connectionStatus, connectionError,
     claudeEmail, claudeSessionKey, claudeStatus, claudeError,
     chatgptEmail, chatgptSessionToken, chatgptStatus, chatgptError,
     theme, language,
-    setApiKey, setClaudeAccount, setChatGPTAccount,
+    setClaudeAccount, setChatGPTAccount,
     setTheme, setLanguage,
   } = useSettingsStore();
   const { testConnection, checkProviders } = useGateway();
@@ -192,28 +192,19 @@ export function SettingsPage() {
           Gateway
         </h2>
         <p className="text-sm text-text-secondary mb-3">
-          Le Gateway est heberge sur le meme serveur que l'application. Entrez votre cle API pour vous authentifier.
+          Le Gateway est heberge sur le meme serveur que l'application. Aucune configuration necessaire.
         </p>
-        <div className="space-y-3">
-          <Input
-            label="Cle API Gateway"
-            type="password"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="cgw_..."
-          />
-          <div className="flex items-center gap-3">
-            <Button onClick={handleTest} size="sm" variant="secondary" disabled={testing}>
-              {testing ? '...' : 'Tester la connexion'}
-            </Button>
-            <Badge variant={connectionStatus === 'ok' ? 'success' : connectionStatus === 'error' ? 'danger' : 'default'}>
-              {connectionStatus === 'ok' && <><Check className="w-3 h-3 mr-1" />Connecte</>}
-              {connectionStatus === 'error' && <><X className="w-3 h-3 mr-1" />Erreur</>}
-              {connectionStatus === 'untested' && 'Non teste'}
-            </Badge>
-          </div>
-          {connectionError && <p className="text-xs text-danger">{connectionError}</p>}
+        <div className="flex items-center gap-3">
+          <Button onClick={handleTest} size="sm" variant="secondary" disabled={testing}>
+            {testing ? '...' : 'Tester la connexion'}
+          </Button>
+          <Badge variant={connectionStatus === 'ok' ? 'success' : connectionStatus === 'error' ? 'danger' : 'default'}>
+            {connectionStatus === 'ok' && <><Check className="w-3 h-3 mr-1" />Connecte</>}
+            {connectionStatus === 'error' && <><X className="w-3 h-3 mr-1" />Erreur</>}
+            {connectionStatus === 'untested' && 'Non teste'}
+          </Badge>
         </div>
+        {connectionError && <p className="text-xs text-danger mt-2">{connectionError}</p>}
       </Card>
 
       {/* Claude Account */}
@@ -346,7 +337,7 @@ export function SettingsPage() {
         </div>
       </Card>
 
-      <p className="text-xs text-text-muted text-center">EduGate v1.1.0</p>
+      <p className="text-xs text-text-muted text-center">EduGate v1.2.0</p>
     </div>
   );
 }

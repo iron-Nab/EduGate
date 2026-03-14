@@ -1,4 +1,3 @@
-import { useSettingsStore } from '../stores/settings-store';
 import type { ChatResponse, HealthResponse, ProviderStatus } from '../types/chat';
 
 class GatewayError extends Error {
@@ -10,23 +9,14 @@ class GatewayError extends Error {
   }
 }
 
-function getGatewayBaseUrl(): string {
-  // Gateway = same origin as the app (no separate URL needed)
-  return window.location.origin;
-}
-
+// No auth needed — front and back are on the same server (backoffice)
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const { apiKey } = useSettingsStore.getState();
-  const baseUrl = getGatewayBaseUrl();
-  const url = `${baseUrl}${path}`;
+  const url = `${window.location.origin}${path}`;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options?.headers as Record<string, string>),
   };
-  if (apiKey) {
-    headers['Authorization'] = `Bearer ${apiKey}`;
-  }
 
   const controller = new AbortController();
   const timeout = path.startsWith('/api/chat') ? 180000 : 10000;
@@ -70,19 +60,6 @@ export const gateway = {
       body: JSON.stringify({ message }),
     }),
 
-  // Auth endpoints for provider configuration
-  setupUser: (username: string, password: string) =>
-    request<{ message: string; api_key: string; recovery_key: string }>('/api/user/setup', {
-      method: 'POST',
-      body: JSON.stringify({ username, password }),
-    }),
-
-  loginUser: (username: string, password: string) =>
-    request<{ message: string; api_key?: string }>('/api/user/login', {
-      method: 'POST',
-      body: JSON.stringify({ username, password }),
-    }),
-
   // Claude auth
   getAuthStatus: () => request<{ authenticated: boolean; email?: string }>('/api/auth/status'),
 
@@ -99,16 +76,9 @@ export const gateway = {
   refreshChatGPT: () =>
     request<{ message: string }>('/api/chatgpt/refresh', { method: 'POST' }),
 
-  // Admin - check provider status
+  // Admin — check provider status
   adminStatus: () =>
     request<{ claude: { available: boolean }; chatgpt: { available: boolean } }>('/api/admin/status'),
-
-  // Set provider mode
-  setProviderMode: (mode: 'auto' | 'claude' | 'chatgpt') =>
-    request<{ message: string }>('/api/admin/provider', {
-      method: 'POST',
-      body: JSON.stringify({ mode }),
-    }),
 };
 
 export { GatewayError };
