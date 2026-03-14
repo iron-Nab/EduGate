@@ -1,0 +1,99 @@
+{
+  "app": {
+    "name": "EduGate",
+    "subtitle": "Scheduling & AI"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "resources": "Resources",
+    "buildings": "Buildings",
+    "rooms": "Rooms",
+    "departments": "Departments",
+    "programs": "Programs",
+    "courses": "Courses",
+    "instructors": "Instructors",
+    "groups": "Groups",
+    "timeslots": "Time Slots",
+    "semesters": "Semesters",
+    "timetable": "Timetable",
+    "chat": "AI Chat",
+    "settings": "Settings"
+  },
+  "actions": {
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "search": "Search",
+    "export": "Export",
+    "import": "Import",
+    "generate": "Generate",
+    "optimize": "Optimize",
+    "test": "Test",
+    "clear": "Clear",
+    "close": "Close",
+    "confirm": "Confirm"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "totalBuildings": "Buildings",
+    "totalRooms": "Rooms",
+    "totalCourses": "Courses",
+    "totalInstructors": "Instructors",
+    "totalGroups": "Groups",
+    "totalEntries": "Scheduled sessions",
+    "conflicts": "Conflicts",
+    "gatewayStatus": "Gateway Status"
+  },
+  "timetable": {
+    "title": "Timetable",
+    "noSemester": "Select a semester",
+    "generateAi": "Generate with AI",
+    "optimizeAi": "Optimize with AI",
+    "explainConflicts": "Explain conflicts",
+    "conflicts": "conflicts detected",
+    "noConflicts": "No conflicts",
+    "locked": "Locked",
+    "assign": "Assign a session"
+  },
+  "chat": {
+    "title": "AI Chat",
+    "newSession": "New conversation",
+    "placeholder": "Type your message...",
+    "send": "Send",
+    "noGateway": "Configure your Gateway in settings",
+    "sessions": "Conversations"
+  },
+  "settings": {
+    "title": "Settings",
+    "gateway": "Gateway Configuration",
+    "gatewayUrl": "Gateway URL",
+    "gatewayUrlPlaceholder": "https://my-gateway.example.com",
+    "apiKey": "API Key",
+    "apiKeyPlaceholder": "cgw_...",
+    "testConnection": "Test connection",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "language": "Language",
+    "data": "Data Management",
+    "exportAll": "Export all data",
+    "importData": "Import data",
+    "clearAll": "Clear all data",
+    "clearConfirm": "This action is irreversible. All your data will be deleted."
+  },
+  "conflicts": {
+    "room": "Room conflict",
+    "instructor": "Instructor conflict",
+    "group": "Group conflict"
+  },
+  "empty": {
+    "noData": "No data",
+    "addFirst": "Start by adding an item"
+  }
+}

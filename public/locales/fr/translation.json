@@ -1,0 +1,99 @@
+{
+  "app": {
+    "name": "EduGate",
+    "subtitle": "Scheduling & AI"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "resources": "Ressources",
+    "buildings": "Batiments",
+    "rooms": "Salles",
+    "departments": "Departements",
+    "programs": "Filieres",
+    "courses": "Cours",
+    "instructors": "Enseignants",
+    "groups": "Groupes",
+    "timeslots": "Creneaux",
+    "semesters": "Semestres",
+    "timetable": "Emploi du temps",
+    "chat": "Chat IA",
+    "settings": "Parametres"
+  },
+  "actions": {
+    "add": "Ajouter",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "search": "Rechercher",
+    "export": "Exporter",
+    "import": "Importer",
+    "generate": "Generer",
+    "optimize": "Optimiser",
+    "test": "Tester",
+    "clear": "Effacer",
+    "close": "Fermer",
+    "confirm": "Confirmer"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "totalBuildings": "Batiments",
+    "totalRooms": "Salles",
+    "totalCourses": "Cours",
+    "totalInstructors": "Enseignants",
+    "totalGroups": "Groupes",
+    "totalEntries": "Seances planifiees",
+    "conflicts": "Conflits",
+    "gatewayStatus": "Statut Gateway"
+  },
+  "timetable": {
+    "title": "Emploi du temps",
+    "noSemester": "Selectionnez un semestre",
+    "generateAi": "Generer avec IA",
+    "optimizeAi": "Optimiser avec IA",
+    "explainConflicts": "Expliquer les conflits",
+    "conflicts": "conflits detectes",
+    "noConflicts": "Aucun conflit",
+    "locked": "Verrouille",
+    "assign": "Assigner une seance"
+  },
+  "chat": {
+    "title": "Chat IA",
+    "newSession": "Nouvelle conversation",
+    "placeholder": "Ecrivez votre message...",
+    "send": "Envoyer",
+    "noGateway": "Configurez votre Gateway dans les parametres",
+    "sessions": "Conversations"
+  },
+  "settings": {
+    "title": "Parametres",
+    "gateway": "Configuration Gateway",
+    "gatewayUrl": "URL du Gateway",
+    "gatewayUrlPlaceholder": "https://mon-gateway.example.com",
+    "apiKey": "Cle API",
+    "apiKeyPlaceholder": "cgw_...",
+    "testConnection": "Tester la connexion",
+    "connected": "Connecte",
+    "disconnected": "Deconnecte",
+    "appearance": "Apparence",
+    "theme": "Theme",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Systeme",
+    "language": "Langue",
+    "data": "Gestion des donnees",
+    "exportAll": "Exporter toutes les donnees",
+    "importData": "Importer des donnees",
+    "clearAll": "Effacer toutes les donnees",
+    "clearConfirm": "Cette action est irreversible. Toutes vos donnees seront supprimees."
+  },
+  "conflicts": {
+    "room": "Conflit de salle",
+    "instructor": "Conflit d'enseignant",
+    "group": "Conflit de groupe"
+  },
+  "empty": {
+    "noData": "Aucune donnee",
+    "addFirst": "Commencez par ajouter un element"
+  }
+}
