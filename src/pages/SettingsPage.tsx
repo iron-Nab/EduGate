@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings, Wifi, WifiOff, Palette, Database, Download, Upload, Trash2, Check, X } from 'lucide-react';
+import { Settings, Wifi, WifiOff, Palette, Database, Download, Upload, Trash2, Check, X, Bot, MessageCircle, Key, RefreshCw } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
@@ -8,24 +8,97 @@ import { Badge } from '../components/ui/Badge';
 import { toast } from '../components/ui/Toast';
 import { useSettingsStore } from '../stores/settings-store';
 import { useGateway } from '../hooks/use-gateway';
+import { gateway } from '../api/gateway-client';
 import { db } from '../db';
 import type { Language, Theme } from '../types/settings';
 
 export function SettingsPage() {
   const { t, i18n } = useTranslation();
-  const { gatewayUrl, apiKey, connectionStatus, connectionError, theme, language, setGatewayUrl, setApiKey, setTheme, setLanguage } = useSettingsStore();
-  const { testConnection } = useGateway();
+  const {
+    apiKey, connectionStatus, connectionError,
+    claudeEmail, claudeSessionKey, claudeStatus, claudeError,
+    chatgptEmail, chatgptSessionToken, chatgptStatus, chatgptError,
+    theme, language,
+    setApiKey, setClaudeAccount, setChatGPTAccount,
+    setTheme, setLanguage,
+  } = useSettingsStore();
+  const { testConnection, checkProviders } = useGateway();
   const [testing, setTesting] = useState(false);
+  const [claudeLoading, setCloudeLoading] = useState(false);
+  const [chatgptLoading, setChatgptLoading] = useState(false);
 
   const handleTest = async () => {
     setTesting(true);
     try {
       await testConnection();
-      toast(t('settings.connected'), 'success');
+      await checkProviders();
+      toast('Gateway connecte', 'success');
     } catch {
-      toast(t('settings.disconnected'), 'error');
+      toast('Gateway inaccessible', 'error');
     } finally {
       setTesting(false);
+    }
+  };
+
+  const handleClaudeAuth = async () => {
+    setCloudeLoading(true);
+    try {
+      const status = await gateway.getAuthStatus();
+      if (status.authenticated) {
+        useSettingsStore.getState().setClaudeStatus('connected');
+        toast('Claude connecte', 'success');
+      } else {
+        await gateway.loginClaude();
+        toast('Connexion Claude lancee - verifiez le navigateur du serveur', 'warning');
+        useSettingsStore.getState().setClaudeStatus('configured');
+      }
+    } catch (e) {
+      useSettingsStore.getState().setClaudeStatus('error', (e as Error).message);
+      toast('Erreur connexion Claude', 'error');
+    } finally {
+      setCloudeLoading(false);
+    }
+  };
+
+  const handleClaudeRefresh = async () => {
+    setCloudeLoading(true);
+    try {
+      await gateway.refreshClaude();
+      useSettingsStore.getState().setClaudeStatus('connected');
+      toast('Token Claude rafraichi', 'success');
+    } catch (e) {
+      useSettingsStore.getState().setClaudeStatus('error', (e as Error).message);
+      toast('Erreur refresh Claude', 'error');
+    } finally {
+      setCloudeLoading(false);
+    }
+  };
+
+  const handleChatGPTAuth = async () => {
+    setChatgptLoading(true);
+    try {
+      await gateway.loginChatGPT();
+      toast('Connexion ChatGPT lancee - verifiez le navigateur du serveur', 'warning');
+      useSettingsStore.getState().setChatGPTStatus('configured');
+    } catch (e) {
+      useSettingsStore.getState().setChatGPTStatus('error', (e as Error).message);
+      toast('Erreur connexion ChatGPT', 'error');
+    } finally {
+      setChatgptLoading(false);
+    }
+  };
+
+  const handleChatGPTRefresh = async () => {
+    setChatgptLoading(true);
+    try {
+      await gateway.refreshChatGPT();
+      useSettingsStore.getState().setChatGPTStatus('connected');
+      toast('Session ChatGPT verifiee', 'success');
+    } catch (e) {
+      useSettingsStore.getState().setChatGPTStatus('error', (e as Error).message);
+      toast('Session ChatGPT expiree', 'error');
+    } finally {
+      setChatgptLoading(false);
     }
   };
 
@@ -90,20 +163,19 @@ export function SettingsPage() {
   const handleClear = async () => {
     if (!confirm(t('settings.clearConfirm'))) return;
     await Promise.all([
-      db.buildings.clear(),
-      db.rooms.clear(),
-      db.departments.clear(),
-      db.programs.clear(),
-      db.courses.clear(),
-      db.instructors.clear(),
-      db.studentGroups.clear(),
-      db.timeSlots.clear(),
-      db.semesters.clear(),
-      db.scheduleEntries.clear(),
-      db.chatSessions.clear(),
-      db.chatMessages.clear(),
+      db.buildings.clear(), db.rooms.clear(), db.departments.clear(),
+      db.programs.clear(), db.courses.clear(), db.instructors.clear(),
+      db.studentGroups.clear(), db.timeSlots.clear(), db.semesters.clear(),
+      db.scheduleEntries.clear(), db.chatSessions.clear(), db.chatMessages.clear(),
     ]);
     toast('Donnees effacees', 'success');
+  };
+
+  const statusBadge = (status: string) => {
+    if (status === 'connected') return <Badge variant="success"><Check className="w-3 h-3 mr-1" />Connecte</Badge>;
+    if (status === 'configured') return <Badge variant="warning">Configure</Badge>;
+    if (status === 'error') return <Badge variant="danger"><X className="w-3 h-3 mr-1" />Erreur</Badge>;
+    return <Badge variant="default">Non configure</Badge>;
   };
 
   return (
@@ -113,37 +185,112 @@ export function SettingsPage() {
         {t('settings.title')}
       </h1>
 
-      {/* Gateway */}
+      {/* Gateway Connection */}
       <Card>
         <h2 className="font-semibold mb-4 flex items-center gap-2">
           {connectionStatus === 'ok' ? <Wifi className="w-5 h-5 text-success" /> : <WifiOff className="w-5 h-5 text-text-muted" />}
-          {t('settings.gateway')}
+          Gateway
         </h2>
+        <p className="text-sm text-text-secondary mb-3">
+          Le Gateway est heberge sur le meme serveur que l'application. Entrez votre cle API pour vous authentifier.
+        </p>
         <div className="space-y-3">
           <Input
-            label={t('settings.gatewayUrl')}
-            value={gatewayUrl}
-            onChange={(e) => setGatewayUrl(e.target.value)}
-            placeholder={t('settings.gatewayUrlPlaceholder')}
-          />
-          <Input
-            label={t('settings.apiKey')}
+            label="Cle API Gateway"
             type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
-            placeholder={t('settings.apiKeyPlaceholder')}
+            placeholder="cgw_..."
           />
           <div className="flex items-center gap-3">
-            <Button onClick={handleTest} size="sm" variant="secondary" disabled={testing || !gatewayUrl}>
-              {testing ? '...' : t('settings.testConnection')}
+            <Button onClick={handleTest} size="sm" variant="secondary" disabled={testing}>
+              {testing ? '...' : 'Tester la connexion'}
             </Button>
             <Badge variant={connectionStatus === 'ok' ? 'success' : connectionStatus === 'error' ? 'danger' : 'default'}>
-              {connectionStatus === 'ok' && <><Check className="w-3 h-3 mr-1" />{t('settings.connected')}</>}
-              {connectionStatus === 'error' && <><X className="w-3 h-3 mr-1" />{t('settings.disconnected')}</>}
+              {connectionStatus === 'ok' && <><Check className="w-3 h-3 mr-1" />Connecte</>}
+              {connectionStatus === 'error' && <><X className="w-3 h-3 mr-1" />Erreur</>}
               {connectionStatus === 'untested' && 'Non teste'}
             </Badge>
           </div>
           {connectionError && <p className="text-xs text-danger">{connectionError}</p>}
+        </div>
+      </Card>
+
+      {/* Claude Account */}
+      <Card>
+        <h2 className="font-semibold mb-4 flex items-center gap-2">
+          <Bot className="w-5 h-5 text-violet-500" />
+          Compte Claude
+          <span className="ml-auto">{statusBadge(claudeStatus)}</span>
+        </h2>
+        <p className="text-sm text-text-secondary mb-3">
+          Configurez votre compte Claude. Le Gateway utilise Claude Code CLI avec votre authentification OAuth.
+        </p>
+        <div className="space-y-3">
+          <Input
+            label="Email Claude"
+            type="email"
+            value={claudeEmail}
+            onChange={(e) => setClaudeAccount(e.target.value, claudeSessionKey)}
+            placeholder="votre-email@exemple.com"
+          />
+          <Input
+            label="Session Key (optionnel)"
+            type="password"
+            value={claudeSessionKey}
+            onChange={(e) => setClaudeAccount(claudeEmail, e.target.value)}
+            placeholder="sk-ant-..."
+          />
+          <div className="flex items-center gap-2">
+            <Button onClick={handleClaudeAuth} size="sm" variant="secondary" disabled={claudeLoading}>
+              <Key className="w-4 h-4" />
+              {claudeLoading ? '...' : 'Connecter Claude'}
+            </Button>
+            <Button onClick={handleClaudeRefresh} size="sm" variant="ghost" disabled={claudeLoading}>
+              <RefreshCw className="w-4 h-4" />
+              Rafraichir
+            </Button>
+          </div>
+          {claudeError && <p className="text-xs text-danger">{claudeError}</p>}
+        </div>
+      </Card>
+
+      {/* ChatGPT Account */}
+      <Card>
+        <h2 className="font-semibold mb-4 flex items-center gap-2">
+          <MessageCircle className="w-5 h-5 text-emerald-500" />
+          Compte ChatGPT
+          <span className="ml-auto">{statusBadge(chatgptStatus)}</span>
+        </h2>
+        <p className="text-sm text-text-secondary mb-3">
+          Configurez votre compte ChatGPT. Le Gateway automatise la connexion via le navigateur (Playwright).
+        </p>
+        <div className="space-y-3">
+          <Input
+            label="Email ChatGPT"
+            type="email"
+            value={chatgptEmail}
+            onChange={(e) => setChatGPTAccount(e.target.value, chatgptSessionToken)}
+            placeholder="votre-email@exemple.com"
+          />
+          <Input
+            label="Session Token (optionnel)"
+            type="password"
+            value={chatgptSessionToken}
+            onChange={(e) => setChatGPTAccount(chatgptEmail, e.target.value)}
+            placeholder="eyJhbG..."
+          />
+          <div className="flex items-center gap-2">
+            <Button onClick={handleChatGPTAuth} size="sm" variant="secondary" disabled={chatgptLoading}>
+              <Key className="w-4 h-4" />
+              {chatgptLoading ? '...' : 'Connecter ChatGPT'}
+            </Button>
+            <Button onClick={handleChatGPTRefresh} size="sm" variant="ghost" disabled={chatgptLoading}>
+              <RefreshCw className="w-4 h-4" />
+              Verifier session
+            </Button>
+          </div>
+          {chatgptError && <p className="text-xs text-danger">{chatgptError}</p>}
         </div>
       </Card>
 
@@ -199,7 +346,7 @@ export function SettingsPage() {
         </div>
       </Card>
 
-      <p className="text-xs text-text-muted text-center">EduGate v1.0.0</p>
+      <p className="text-xs text-text-muted text-center">EduGate v1.1.0</p>
     </div>
   );
 }

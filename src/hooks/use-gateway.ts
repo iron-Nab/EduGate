@@ -6,9 +6,9 @@ import { db } from '../db';
 import { generateId } from '../lib/utils';
 
 export function useGateway() {
-  const { gatewayUrl, apiKey } = useSettingsStore();
+  const { apiKey } = useSettingsStore();
   const { setLoading, setError } = useChatStore();
-  const isConfigured = Boolean(gatewayUrl && apiKey);
+  const isConfigured = Boolean(apiKey);
 
   const testConnection = useCallback(async () => {
     try {
@@ -22,12 +22,22 @@ export function useGateway() {
     }
   }, []);
 
+  const checkProviders = useCallback(async () => {
+    try {
+      const status = await gateway.adminStatus();
+      const store = useSettingsStore.getState();
+      if (status.claude?.available) store.setClaudeStatus('connected');
+      if (status.chatgpt?.available) store.setChatGPTStatus('connected');
+    } catch {
+      // silently fail
+    }
+  }, []);
+
   const sendMessage = useCallback(async (content: string, sessionId?: string, systemPrompt?: string) => {
     setLoading(true);
     setError(null);
 
     try {
-      // Save user message locally
       const userMsg = {
         id: generateId(),
         sessionId: sessionId || 'pending',
@@ -45,11 +55,9 @@ export function useGateway() {
 
       const actualSessionId = response.session_id;
 
-      // Update user message with actual session id
       userMsg.sessionId = actualSessionId;
       await db.chatMessages.add(userMsg);
 
-      // Save assistant message
       await db.chatMessages.add({
         id: generateId(),
         sessionId: actualSessionId,
@@ -60,7 +68,6 @@ export function useGateway() {
         createdAt: new Date(),
       });
 
-      // Create or update session
       const existingSession = await db.chatSessions.get(actualSessionId);
       if (!existingSession) {
         await db.chatSessions.add({
@@ -85,5 +92,5 @@ export function useGateway() {
     }
   }, [setLoading, setError]);
 
-  return { isConfigured, testConnection, sendMessage };
+  return { isConfigured, testConnection, checkProviders, sendMessage };
 }

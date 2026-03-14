@@ -10,11 +10,16 @@ class GatewayError extends Error {
   }
 }
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const { gatewayUrl, apiKey } = useSettingsStore.getState();
-  if (!gatewayUrl) throw new GatewayError(0, 'Gateway URL not configured');
+function getGatewayBaseUrl(): string {
+  // Gateway = same origin as the app (no separate URL needed)
+  return window.location.origin;
+}
 
-  const url = `${gatewayUrl.replace(/\/$/, '')}${path}`;
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const { apiKey } = useSettingsStore.getState();
+  const baseUrl = getGatewayBaseUrl();
+  const url = `${baseUrl}${path}`;
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options?.headers as Record<string, string>),
@@ -48,13 +53,14 @@ export const gateway = {
 
   getProviders: () => request<Record<string, ProviderStatus>>('/api/providers'),
 
-  sendMessage: (message: string, sessionId?: string, systemPrompt?: string) =>
+  sendMessage: (message: string, sessionId?: string, systemPrompt?: string, provider?: string) =>
     request<ChatResponse>('/api/chat', {
       method: 'POST',
       body: JSON.stringify({
         message,
         session_id: sessionId,
         system_prompt: systemPrompt,
+        provider,
       }),
     }),
 
@@ -62,6 +68,46 @@ export const gateway = {
     request<ChatResponse>(`/api/chat/${sessionId}`, {
       method: 'POST',
       body: JSON.stringify({ message }),
+    }),
+
+  // Auth endpoints for provider configuration
+  setupUser: (username: string, password: string) =>
+    request<{ message: string; api_key: string; recovery_key: string }>('/api/user/setup', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    }),
+
+  loginUser: (username: string, password: string) =>
+    request<{ message: string; api_key?: string }>('/api/user/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    }),
+
+  // Claude auth
+  getAuthStatus: () => request<{ authenticated: boolean; email?: string }>('/api/auth/status'),
+
+  loginClaude: () =>
+    request<{ message: string }>('/api/auth/login', { method: 'POST' }),
+
+  refreshClaude: () =>
+    request<{ message: string }>('/api/auth/refresh', { method: 'POST' }),
+
+  // ChatGPT auth
+  loginChatGPT: () =>
+    request<{ message: string }>('/api/chatgpt/login', { method: 'POST' }),
+
+  refreshChatGPT: () =>
+    request<{ message: string }>('/api/chatgpt/refresh', { method: 'POST' }),
+
+  // Admin - check provider status
+  adminStatus: () =>
+    request<{ claude: { available: boolean }; chatgpt: { available: boolean } }>('/api/admin/status'),
+
+  // Set provider mode
+  setProviderMode: (mode: 'auto' | 'claude' | 'chatgpt') =>
+    request<{ message: string }>('/api/admin/provider', {
+      method: 'POST',
+      body: JSON.stringify({ mode }),
     }),
 };
 
